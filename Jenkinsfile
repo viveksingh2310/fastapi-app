@@ -2,51 +2,46 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "vivek0231234/fastapi-app"
+        IMAGE_NAME = 'vivek0231234/demo-app'
         IMAGE_TAG  = "${BUILD_NUMBER}"
-        DOCKER_CREDS = credentials('dockerhub-creds')
+        DOCKERHUB  = credentials('dockerhub-cred')
     }
 
     stages {
 
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+
         stage('Build Docker Image') {
             steps {
                 bat "docker build -t %IMAGE_NAME%:%IMAGE_TAG% ."
+                bat "docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest"
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Docker Login') {
             steps {
-                bat """
-                echo %DOCKER_CREDS_PSW% | docker login ^
-                -u %DOCKER_CREDS_USR% --password-stdin
-                """
+                bat '''
+                echo %DOCKERHUB_PSW% | docker login -u %DOCKERHUB_USR% --password-stdin
+                '''
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push Image') {
             steps {
-                bat """
-                docker push %IMAGE_NAME%:%IMAGE_TAG%
-                docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest
-                docker push %IMAGE_NAME%:latest
-                """
-            }
-        }
-
-        stage('Cleanup Old Docker Images') {
-            steps {
-                bat """
-                docker image prune -f
-                for /f "tokens=1,2" %%i in ('docker images %IMAGE_NAME% --format "{{.ID}} {{.Tag}}" ^| findstr /v latest') do docker rmi -f %%i
-                """
+                bat "docker push %IMAGE_NAME%:%IMAGE_TAG%"
+                bat "docker push %IMAGE_NAME%:latest"
             }
         }
     }
 
     post {
-        always {
-            bat "docker logout"
+        success {
+            bat '''
+            docker image prune -f
+            docker images vivek0231234/demo-app -q | more +1 | for %%i in (%%~n) do docker rmi -f %%i
+            '''
         }
     }
 }
