@@ -8,26 +8,18 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/viveksingh2310/fastapi-app.git'
-            }
-        }
 
         stage('Build Docker Image') {
             steps {
-                sh """
-                docker build -t $IMAGE_NAME:$IMAGE_TAG .
-                """
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
         stage('Login to Docker Hub') {
             steps {
                 sh """
-                echo $DOCKER_CREDS_PSW | docker login \
-                    -u $DOCKER_CREDS_USR --password-stdin
+                echo ${DOCKER_CREDS_PSW} | docker login \
+                -u ${DOCKER_CREDS_USR} --password-stdin
                 """
             }
         }
@@ -35,9 +27,9 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 sh """
-                docker push $IMAGE_NAME:$IMAGE_TAG
-                docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
-                docker push $IMAGE_NAME:latest
+                docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                docker push ${IMAGE_NAME}:latest
                 """
             }
         }
@@ -47,14 +39,14 @@ pipeline {
                 success()
             }
             steps {
-                sh """
-                echo "Removing dangling images..."
+                sh '''
+                echo "Cleaning dangling images..."
                 docker image prune -f
 
-                echo "Removing old builds (except latest)..."
-                docker images $IMAGE_NAME --format "{{.ID}} {{.Tag}}" | \
+                echo "Removing old images except latest..."
+                docker images vivek0231234/fastapi-app --format "{{.ID}} {{.Tag}}" |
                 grep -v latest | awk '{print $1}' | xargs -r docker rmi -f
-                """
+                '''
             }
         }
     }
