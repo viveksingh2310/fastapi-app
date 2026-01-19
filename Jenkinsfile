@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "vivek0231234/demo-app"
         IMAGE_TAG  = "${BUILD_NUMBER}"
-        DOCKER_CREDS = credentials('dockerhub-creds')
+        DOCKER_CRED = credentials('dockerhub-cred')
     }
 
     stages {
@@ -12,8 +12,8 @@ pipeline {
         stage('Docker Login') {
             steps {
                 bat """
-                echo %DOCKER_CREDS_PSW% | docker login ^
-                -u %DOCKER_CREDS_USR% --password-stdin
+                echo %DOCKER_CRED_PSW% | docker login ^
+                -u %DOCKER_CRED_USR% --password-stdin
                 """
             }
         }
