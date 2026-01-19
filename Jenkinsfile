@@ -35,9 +35,6 @@ pipeline {
         }
 
         stage('Cleanup Old Docker Images') {
-            when {
-                success()
-            }
             steps {
                 sh '''
                 echo "Cleaning dangling images..."
